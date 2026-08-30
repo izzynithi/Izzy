@@ -140,6 +140,7 @@
     <input type="file" id="dataFileInput" accept=".json" style="display:none">
     <button class="btn primary" id="btnCloudUpload"><span class="ic">☁</span> อัปโหลด .glb → สร้างลิงก์ทันที</button>
     <input type="file" id="cloudFileInput" accept=".glb" style="display:none">
+    <button class="btn primary" id="btnCloudUploadData"><span class="ic">☁</span> รวมข้อมูล .json เข้ากับลิงก์</button>
   </div>
 </div>
 
@@ -959,6 +960,12 @@ async function init(){
    ready-to-send share link using ?glb=<url> (see init() above).
    No GitHub editing needed for this path at all.
 ================================================================= */
+let lastGlbCloudUrl = ''; // remembered so the data.json button can combine into one link
+function currentShareLink(dataUrl){
+  let link = `${location.origin}${location.pathname}?glb=${encodeURIComponent(lastGlbCloudUrl)}`;
+  if (dataUrl) link += `&data=${encodeURIComponent(dataUrl)}`;
+  return link;
+}
 function showLinkModal(link){
   document.getElementById('linkResultInput').value = link;
   document.getElementById('linkModal').style.display = 'flex';
@@ -973,11 +980,16 @@ document.getElementById('copyLinkBtn').addEventListener('click', async ()=>{
   catch(e){ document.execCommand('copy'); showToast('คัดลอกลิงก์แล้ว'); }
 });
 
-document.getElementById('btnCloudUpload').addEventListener('click', ()=>{
+function cloudinaryReady(){
   if (CLOUDINARY_CLOUD_NAME.startsWith('YOUR_') || CLOUDINARY_UPLOAD_PRESET.startsWith('YOUR_')){
     showToast('ยังไม่ได้ตั้งค่า Cloudinary ในไฟล์นี้ — ใส่ Cloud name และ Upload preset ในโค้ดก่อนใช้ปุ่มนี้');
-    return;
+    return false;
   }
+  return true;
+}
+
+document.getElementById('btnCloudUpload').addEventListener('click', ()=>{
+  if (!cloudinaryReady()) return;
   document.getElementById('cloudFileInput').click();
 });
 document.getElementById('cloudFileInput').addEventListener('change', async e=>{
@@ -1000,11 +1012,46 @@ document.getElementById('cloudFileInput').addEventListener('change', async e=>{
     });
     const json = await res.json();
     if (!res.ok || !json.secure_url) throw new Error((json.error && json.error.message) || 'upload failed');
-    const shareLink = `${location.origin}${location.pathname}?glb=${encodeURIComponent(json.secure_url)}`;
-    showLinkModal(shareLink);
+    lastGlbCloudUrl = json.secure_url;
+    showLinkModal(currentShareLink());
+    showToast('อัปโหลดโมเดลสำเร็จ — ถ้ากรอกข้อมูลชิ้นงานเสร็จแล้ว กดปุ่ม "รวมข้อมูล .json เข้ากับลิงก์" เพื่อรวมเข้าลิงก์เดียวกัน');
   } catch(err){
     console.error(err);
     showToast('อัปโหลดขึ้นคลาวด์ไม่สำเร็จ: ' + (err.message || 'ไม่ทราบสาเหตุ'));
+  }
+});
+
+document.getElementById('btnCloudUploadData').addEventListener('click', async ()=>{
+  if (!cloudinaryReady()) return;
+  if (!lastGlbCloudUrl){
+    showToast('ยังไม่ได้อัปโหลดโมเดล .glb ขึ้นคลาวด์เลย — กด "อัปโหลด .glb → สร้างลิงก์ทันที" ก่อนหนึ่งครั้ง');
+    return;
+  }
+  if (!meshes.length){
+    showToast('ยังไม่มีชิ้นงานให้ส่งออกข้อมูล — โหลดโมเดลก่อน');
+    return;
+  }
+  showToast('กำลังอัปโหลดข้อมูลชิ้นงานขึ้นคลาวด์...');
+  try {
+    const parts = meshes.map(m=>({
+      no:m.userData.no, name:m.userData.name, type:m.userData.type,
+      material:m.userData.material, surface:m.userData.surface,
+      edge:m.userData.edge, isDoor:m.userData.isDoor,
+    }));
+    const blob = new Blob([JSON.stringify({ parts }, null, 2)], { type:'application/json' });
+    const form = new FormData();
+    form.append('file', blob, 'data.json');
+    form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`, {
+      method:'POST', body:form,
+    });
+    const json = await res.json();
+    if (!res.ok || !json.secure_url) throw new Error((json.error && json.error.message) || 'upload failed');
+    showLinkModal(currentShareLink(json.secure_url));
+    showToast('รวมข้อมูลเข้ากับลิงก์เรียบร้อย — ลิงก์นี้ตอนนี้มีทั้งโมเดลและข้อมูลชิ้นงานครบแล้ว');
+  } catch(err){
+    console.error(err);
+    showToast('อัปโหลดข้อมูลไม่สำเร็จ: ' + (err.message || 'ไม่ทราบสาเหตุ'));
   }
 });
 
