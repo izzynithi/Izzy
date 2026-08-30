@@ -1,0 +1,58 @@
+{
+  "parts": [
+    {
+      "no": 1,
+      "name": "Mesh1 _13_______ Model",
+      "type": "หผปแปผแ",
+      "material": "ผปแผปแ",
+      "surface": "ผปแผปแ",
+      "edge": "",
+      "isDoor": false
+    },
+    {
+      "no": 2,
+      "name": "Mesh2 _14_________ Model",
+      "type": "ผปแผปแ",
+      "material": "ผปแปผแ",
+      "surface": "ผปแปผแ",
+      "edge": "",
+      "isDoor": false
+    },
+    {
+      "no": 3,
+      "name": "Mesh3 _15________ Model",
+      "type": "แผปแปผแ",
+      "material": "ปผแปผแ",
+      "surface": "ผปแปผแ",
+      "edge": "",
+      "isDoor": false
+    },
+    {
+      "no": 4,
+      "name": "Mesh4 _16_________ Model",
+      "type": "",
+      "material": "",
+      "surface": "",
+      "edge": "",
+      "isDoor": false
+    },
+    {
+      "no": 5,
+      "name": "Mesh5 _17__________ Model",
+      "type": "",
+      "material": "",
+      "surface": "",
+      "edge": "",
+      "isDoor": false
+    },
+    {
+      "no": 6,
+      "name": "Mesh6 _18_________ Model",
+      "type": "",
+      "material": "",
+      "surface": "",
+      "edge": "",
+      "isDoor": false
+    }
+  ]
+}
